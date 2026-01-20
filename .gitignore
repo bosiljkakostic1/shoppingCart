@@ -1,0 +1,55 @@
+# Dependencies
+/node_modules
+/vendor
+
+# Build files
+/public/build
+/public/hot
+/bootstrap/ssr
+
+# Environment files
+.env
+.env.backup
+.env.production
+
+# Storage
+/storage/*.key
+/storage/pail
+/public/storage
+
+# Cache
+/.phpunit.cache
+.phpunit.result.cache
+
+# IDE
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.phpactor.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+Homestead.json
+Homestead.yaml
+/auth.json
+
+# Auto-generated files
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
+
+# Database
+*.sqlite
+*.sqlite-journal
+/database/*.sqlite
+/database/*.sqlite-journal
