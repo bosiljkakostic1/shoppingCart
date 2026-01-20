@@ -60,8 +60,9 @@ class Product extends Model
         
         // Check if stock is equal to or less than minimum stock quantity
         if ($availableQuantity <= $this->minStockQuantity) {
-            // Dispatch low stock notification job
-            \App\Jobs\LowStockNotificationJob::dispatch($this->refresh());
+            // Dispatch low stock notification job with product ID instead of model
+            // This prevents serialization issues with Eloquent models
+            \App\Jobs\LowStockNotificationJob::dispatch($this->id);
         }
     }
 }

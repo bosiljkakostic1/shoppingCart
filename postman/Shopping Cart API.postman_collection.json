@@ -1,0 +1,590 @@
+{
+	"info": {
+		"_postman_id": "shopping-cart-api-2026",
+		"name": "Shopping Cart API",
+		"description": "API collection for Shopping Cart Application",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password\",\n    \"password_confirmation\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"register"
+							]
+						},
+						"description": "Register a new user account"
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// IMPORTANT: Run 'Get CSRF Token' request FIRST before this Login request",
+									"// Laravel Fortify requires both the XSRF-TOKEN cookie AND X-XSRF-TOKEN header to match",
+									"// Both must come from the same session",
+									"",
+									"// Check if we have the CSRF token cookie",
+									"const cookies = pm.cookies.toObject();",
+									"if (cookies['XSRF-TOKEN']) {",
+									"    // Extract token from cookie and set in environment",
+									"    const xsrfToken = decodeURIComponent(cookies['XSRF-TOKEN']);",
+									"    pm.environment.set('xsrf_token', xsrfToken);",
+									"    console.log('✅ CSRF token found in cookies, ready for login');",
+									"} else {",
+									"    // No cookie found - user needs to run 'Get CSRF Token' first",
+									"    console.error('❌ XSRF-TOKEN cookie not found!');",
+									"    console.error('Please run \"Get CSRF Token\" request FIRST, then run Login.');",
+									"    ",
+									"    // Check if token exists in environment (might be manually set)",
+									"    const envToken = pm.environment.get('xsrf_token');",
+									"    if (!envToken) {",
+									"        throw new Error('CSRF token not found. Please run \"Get CSRF Token\" request first.');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Extract CSRF token from cookies after successful login",
+									"pm.test('Login Response Check', function () {",
+									"    if (pm.response.code === 204 || pm.response.code === 200) {",
+									"        const cookies = pm.cookies.toObject();",
+									"        ",
+									"        // Try to get XSRF-TOKEN from cookies",
+									"        if (cookies['XSRF-TOKEN']) {",
+									"            const xsrfToken = decodeURIComponent(cookies['XSRF-TOKEN']);",
+									"            pm.environment.set('xsrf_token', xsrfToken);",
+									"            console.log('✅ CSRF token updated after login');",
+									"        }",
+									"        console.log('✅ Login successful! Status:', pm.response.code);",
+									"        ",
+									"        pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"    } else {",
+									"        console.log('❌ Login failed. Status:', pm.response.code);",
+									"        console.log('Response body:', pm.response.text());",
+									"        ",
+									"        // Check if it's a CSRF error",
+									"        const responseText = pm.response.text();",
+									"        if (responseText.includes('CSRF token mismatch')) {",
+									"            console.log('⚠️ CSRF token mismatch detected');",
+									"            ",
+									"            // Check cookies",
+									"            const cookies = pm.cookies.toObject();",
+									"            const cookieKeys = Object.keys(cookies);",
+									"            ",
+									"            console.log('📋 Cookie Debug Info:');",
+									"            console.log('  - Available cookies:', cookieKeys);",
+									"            console.log('  - XSRF-TOKEN present:', cookieKeys.includes('XSRF-TOKEN'));",
+									"            console.log('  - laravel_session present:', cookieKeys.includes('laravel_session'));",
+									"            ",
+									"            // Check environment variable",
+									"            const envToken = pm.environment.get('xsrf_token');",
+									"            console.log('  - xsrf_token env var:', envToken ? 'SET (' + envToken.substring(0, 20) + '...)' : 'NOT SET');",
+									"            ",
+									"            // Check cookie value",
+									"            if (cookies['XSRF-TOKEN']) {",
+									"                const cookieToken = decodeURIComponent(cookies['XSRF-TOKEN']);",
+									"                console.log('  - Cookie token (first 20 chars):', cookieToken.substring(0, 20) + '...');",
+									"                ",
+									"                // Update environment if different",
+									"                if (envToken !== cookieToken) {",
+									"                    console.log('  - ⚠️ Token mismatch! Updating environment variable...');",
+									"                    pm.environment.set('xsrf_token', cookieToken);",
+									"                }",
+									"            }",
+									"            ",
+									"            // Critical check: session cookie",
+									"            if (!cookieKeys.includes('laravel_session')) {",
+									"                console.log('  - ❌ CRITICAL: laravel_session cookie is missing!');",
+									"                console.log('  - Solution: Run \"Get CSRF Token\" request FIRST to get both cookies');",
+									"            }",
+									"            ",
+									"            console.log('');",
+									"            console.log('💡 Solution: Clear cookies, run \"Get CSRF Token\", then run \"Login\" immediately');",
+									"        }",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{user_email}}\",\n    \"password\": \"{{user_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						},
+						"description": "Login and authenticate user. CSRF token is automatically fetched before login and included in the request."
+					}
+				},
+				{
+					"name": "Get CSRF Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Extract CSRF token from cookies",
+									"pm.test('CSRF Token Extraction', function () {",
+									"    const cookies = pm.cookies.toObject();",
+									"    ",
+									"    if (cookies['XSRF-TOKEN']) {",
+									"        const xsrfToken = decodeURIComponent(cookies['XSRF-TOKEN']);",
+									"        pm.environment.set('xsrf_token', xsrfToken);",
+									"        ",
+									"        // Log to both console and test results",
+									"        console.log('✅ CSRF token extracted and saved');",
+									"        console.log('Token (first 30 chars):', xsrfToken.substring(0, 30) + '...');",
+									"        ",
+									"        pm.expect(xsrfToken).to.be.a('string');",
+									"        pm.expect(xsrfToken.length).to.be.above(0);",
+									"    } else {",
+									"        console.log('❌ XSRF-TOKEN cookie not found');",
+									"        console.log('Available cookies:', Object.keys(cookies));",
+									"        ",
+									"        // Try to get from response headers",
+									"        const setCookieHeader = pm.response.headers.get('Set-Cookie');",
+									"        if (setCookieHeader) {",
+									"            console.log('Set-Cookie header:', setCookieHeader);",
+									"        }",
+									"        ",
+									"        pm.expect(cookies['XSRF-TOKEN']).to.exist;",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Get CSRF token cookie by visiting homepage. Run this manually if you need to refresh the token. The Login request automatically calls this before login."
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"logout"
+							]
+						},
+						"description": "Logout the authenticated user"
+					}
+				}
+			],
+			"description": "Authentication endpoints (Laravel Fortify)"
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products"
+							]
+						},
+						"description": "Get all products with their current available stock quantities"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}"
+							]
+						},
+						"description": "Get a single product by ID with current stock quantity"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Quantity",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}/available-quantity",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}",
+								"available-quantity"
+							]
+						},
+						"description": "Get available quantity for a specific product (calculated from productInputs minus shoppingCartProducts)"
+					},
+					"response": []
+				}
+			],
+			"description": "Product management endpoints"
+		},
+		{
+			"name": "Shopping Cart",
+			"item": [
+				{
+					"name": "Get Active Cart",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/cart",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cart"
+							]
+						},
+						"description": "Get or create active shopping cart for the authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Product to Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": {{product_id}},\n    \"quantity\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/cart/add",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cart",
+								"add"
+							]
+						},
+						"description": "Add a product to the shopping cart. If product already exists, quantity will be updated."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Cart Item Quantity",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 5\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/cart/products/{{cart_product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cart",
+								"products",
+								"{{cart_product_id}}"
+							]
+						},
+						"description": "Update the quantity of a cart item"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Product from Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/cart/products/{{cart_product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cart",
+								"products",
+								"{{cart_product_id}}"
+							]
+						},
+						"description": "Remove a product from the shopping cart"
+					},
+					"response": []
+				},
+				{
+					"name": "Finish Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/cart/finish",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"cart",
+								"finish"
+							]
+						},
+						"description": "Finish the order - changes cart state to 'ordered'"
+					},
+					"response": []
+				}
+			],
+			"description": "Shopping cart management endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract CSRF token from cookies if not set",
+					"if (!pm.environment.get('xsrf_token')) {",
+					"    const cookies = pm.cookies.toObject();",
+					"    if (cookies['XSRF-TOKEN']) {",
+					"        const xsrfToken = decodeURIComponent(cookies['XSRF-TOKEN']);",
+					"        pm.environment.set('xsrf_token', xsrfToken);",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract CSRF token from response cookies",
+					"const cookies = pm.cookies.toObject();",
+					"if (cookies['XSRF-TOKEN']) {",
+					"    const xsrfToken = decodeURIComponent(cookies['XSRF-TOKEN']);",
+					"    pm.environment.set('xsrf_token', xsrfToken);",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}

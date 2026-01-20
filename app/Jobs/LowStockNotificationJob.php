@@ -18,7 +18,7 @@ class LowStockNotificationJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public Product $product
+        public int $productId
     ) {
         //
     }
@@ -29,9 +29,16 @@ class LowStockNotificationJob implements ShouldQueue
     public function handle(): void
     {
         // Prevent duplicate notifications within 1 hour
-        $cacheKey = 'low_stock_notification_' . $this->product->id;
+        $cacheKey = 'low_stock_notification_' . $this->productId;
         if (Cache::has($cacheKey)) {
             return; // Already notified recently
+        }
+
+        // Get the product fresh from database
+        $product = Product::with('productInputs')->find($this->productId);
+        
+        if (!$product) {
+            return; // Product doesn't exist
         }
 
         // Get admin user (first user or create dummy admin)
@@ -46,14 +53,13 @@ class LowStockNotificationJob implements ShouldQueue
             ]);
         }
 
-        // Refresh product to get latest stock
-        $this->product->refresh();
-        $availableQuantity = $this->product->getAvailableQuantity();
+        // Get current available quantity
+        $availableQuantity = $product->getAvailableQuantity();
 
         // Double-check stock is still low before sending
-        if ($availableQuantity <= $this->product->minStockQuantity) {
+        if ($availableQuantity <= $product->minStockQuantity) {
             // Send low stock notification email
-            Mail::to($admin->email)->send(new LowStockNotification($this->product));
+            Mail::to($admin->email)->send(new LowStockNotification($product));
             
             // Cache notification for 1 hour to prevent duplicates
             Cache::put($cacheKey, true, now()->addHour());

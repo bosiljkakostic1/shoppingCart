@@ -265,7 +265,10 @@ class ShoppingCartController extends Controller
             $cartProduct->updatedAt = now();
             $cartProduct->save();
 
-            $cart = ShoppingCart::findOrFail($cartProduct->shoppingCartId);
+            // Verify cart belongs to the authenticated user
+            $cart = ShoppingCart::where('id', $cartProduct->shoppingCartId)
+                ->where('userId', $user->id)
+                ->firstOrFail();
             $this->recalculateCartSum($cart);
 
             DB::commit();
@@ -312,7 +315,10 @@ class ShoppingCartController extends Controller
             $productId = $cartProduct->productId;
             $product = Product::with('productInputs')->findOrFail($productId);
 
-            $cart = ShoppingCart::findOrFail($cartProduct->shoppingCartId);
+            // Verify cart belongs to the authenticated user
+            $cart = ShoppingCart::where('id', $cartProduct->shoppingCartId)
+                ->where('userId', $user->id)
+                ->firstOrFail();
             $cartProduct->delete();
 
             $this->recalculateCartSum($cart);

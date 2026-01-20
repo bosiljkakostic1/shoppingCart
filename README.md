@@ -150,17 +150,32 @@ npm run build
 
 ### Development Mode (Recommended)
 
-The easiest way to run the application in development is using the provided npm script which starts all necessary services concurrently:
+The easiest way to run the application in development is using the provided composer script which starts all necessary services concurrently:
+
+```bash
+composer run dev
+```
+
+**OR** if you prefer npm:
 
 ```bash
 npm run dev
 ```
 
-This command will start:
+**Note**: `composer run dev` starts everything including the scheduler, while `npm run dev` only starts Vite. Use `composer run dev` for full development setup.
+
+The `composer run dev` command will start:
 - Laravel development server (http://localhost:8000)
 - Queue worker (for processing jobs)
+- Schedule worker (for running scheduled tasks like daily sales reports)
 - Log viewer (Pail)
 - Vite dev server (for hot module replacement)
+
+**To restart after interruption:**
+Simply run `composer run dev` again. All services will restart automatically.
+
+**To stop all services:**
+Press `Ctrl+C` in the terminal where `composer run dev` is running. This will stop all services gracefully.
 
 ### Manual Setup
 
@@ -190,19 +205,23 @@ This is required for processing:
 npm run dev
 ```
 
-#### Terminal 4: Run Scheduled Tasks (for production)
+#### Terminal 4: Run Scheduled Tasks (for development)
 
-For production, add this to your crontab:
+For development/testing, run the schedule worker:
+
+```bash
+php artisan schedule:work
+```
+
+This will run scheduled tasks (like daily sales reports) according to their schedule.
+
+**For production**, add this to your crontab:
 
 ```bash
 * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-For development/testing, you can run scheduled tasks manually:
-
-```bash
-php artisan schedule:work
-```
+**Note**: If you're using `composer run dev`, the schedule worker is already included and you don't need to run it separately.
 
 ## Queue Configuration
 
@@ -364,6 +383,44 @@ shoppingCart/
 ## License
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## API Documentation
+
+For detailed API endpoint documentation, see [API_ENDPOINTS.md](API_ENDPOINTS.md).
+
+### Postman Collection
+
+A Postman collection is included for easy API testing:
+
+1. **Collection**: `postman/Shopping Cart API.postman_collection.json`
+2. **Environment**: `postman/Local Environment.postman_environment.json`
+
+To use:
+1. Import both files into Postman
+2. Set environment variables (user_email, user_password)
+3. Start with the Login request to authenticate
+4. Use other endpoints with the CSRF token
+
+### Available Endpoints
+
+**Authentication** (Laravel Fortify):
+- `POST /register` - Register new user
+- `POST /login` - Login user
+- `POST /logout` - Logout user
+
+**Products**:
+- `GET /api/products` - Get all products
+- `GET /api/products/{id}` - Get product by ID
+- `GET /api/products/{id}/available-quantity` - Get available quantity
+
+**Shopping Cart**:
+- `GET /api/cart` - Get active cart
+- `POST /api/cart/add` - Add product to cart
+- `PUT /api/cart/products/{cartProductId}` - Update cart item quantity
+- `DELETE /api/cart/products/{cartProductId}` - Remove product from cart
+- `POST /api/cart/finish` - Finish order
+
+All API endpoints require authentication and CSRF token. See [API_ENDPOINTS.md](API_ENDPOINTS.md) for details.
 
 ## Support
 
