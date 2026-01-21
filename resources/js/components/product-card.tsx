@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { ShoppingCart, Minus, Plus } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { ShoppingCart, Minus, Plus } from 'lucide-react';
 
 interface Product {
     id: number;
@@ -26,28 +26,22 @@ export function ProductCard({ product, onAddToCart, isAdding = false }: ProductC
     const stockQuantity = typeof product.stockQuantity === 'string' ? parseInt(product.stockQuantity, 10) : product.stockQuantity;
     const minStockQuantity = typeof product.minStockQuantity === 'string' ? parseInt(product.minStockQuantity, 10) : product.minStockQuantity;
 
-    const maxQuantity = Math.max(1, Math.floor(stockQuantity / 2));
+    const maxQuantity = Math.max(1, stockQuantity);
     const [quantity, setQuantity] = useState(1);
-    const [isDisabled, setIsDisabled] = useState(stockQuantity === 0);
+    const isDisabled = stockQuantity === 0;
 
-    useEffect(() => {
-        setIsDisabled(stockQuantity === 0);
-        // Reset quantity if it exceeds max when stock changes
-        setQuantity((prevQuantity) => {
-            const newMax = Math.max(1, Math.floor(stockQuantity / 2));
-            return prevQuantity > newMax ? newMax : prevQuantity;
-        });
-    }, [stockQuantity]);
+    // Derive effective quantity - automatically clamps when stock changes without needing useEffect
+    const effectiveQuantity = Math.min(quantity, maxQuantity);
 
     const handleDecrement = () => {
-        if (quantity > 1) {
-            setQuantity(quantity - 1);
+        if (effectiveQuantity > 1) {
+            setQuantity(effectiveQuantity - 1);
         }
     };
 
     const handleIncrement = () => {
-        if (quantity < maxQuantity) {
-            setQuantity(quantity + 1);
+        if (effectiveQuantity < maxQuantity) {
+            setQuantity(effectiveQuantity + 1);
         }
     };
 
@@ -55,11 +49,11 @@ export function ProductCard({ product, onAddToCart, isAdding = false }: ProductC
         if (isDisabled || isAdding) return;
 
         try {
-            await onAddToCart(product.id, quantity);
+            await onAddToCart(product.id, effectiveQuantity);
             // Reset quantity to default (1) after successful add
             setQuantity(1);
         } catch (error) {
-            // Error handling is done in parent component
+            console.error('Error adding to cart:', error);
         }
     };
 
@@ -105,13 +99,13 @@ export function ProductCard({ product, onAddToCart, isAdding = false }: ProductC
                             size="icon"
                             className="h-9 w-9 rounded-none hover:bg-accent"
                             onClick={handleDecrement}
-                            disabled={quantity <= 1 || isDisabled || isAdding}
+                            disabled={effectiveQuantity <= 1 || isDisabled || isAdding}
                         >
                             <Minus className="h-4 w-4" />
                         </Button>
                         <div className="h-9 min-w-[3rem] flex items-center justify-center px-3 border-x border-input bg-background">
                             <span className="text-sm font-medium text-foreground">
-                                {quantity}
+                                {effectiveQuantity}
                             </span>
                         </div>
                         <Button
@@ -120,7 +114,7 @@ export function ProductCard({ product, onAddToCart, isAdding = false }: ProductC
                             size="icon"
                             className="h-9 w-9 rounded-none hover:bg-accent"
                             onClick={handleIncrement}
-                            disabled={quantity >= maxQuantity || isDisabled || isAdding}
+                            disabled={effectiveQuantity >= maxQuantity || isDisabled || isAdding}
                         >
                             <Plus className="h-4 w-4" />
                         </Button>

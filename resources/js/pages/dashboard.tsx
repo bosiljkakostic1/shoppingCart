@@ -1,4 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
+import { AlertCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { ProductCard } from '@/components/product-card';
@@ -7,7 +8,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { AlertCircle } from 'lucide-react';
 
 // Helper function to get CSRF token from cookies
 function getCsrfToken(): string | null {
@@ -46,6 +46,7 @@ export default function Dashboard() {
     const [cartOpen, setCartOpen] = useState(false);
     const [cartQuantity, setCartQuantity] = useState(0);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { auth } = usePage().props as { auth: { user: { id: number } } };
 
     const fetchProducts = async () => {
@@ -112,6 +113,7 @@ export default function Dashboard() {
         );
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const getAvailableQuantity = async (productId: number): Promise<number> => {
         try {
             const csrfToken = getCsrfToken();

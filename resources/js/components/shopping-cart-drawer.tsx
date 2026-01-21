@@ -1,5 +1,7 @@
+import { Trash2, Minus, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { ShoppingCartIcon } from '@/components/shopping-cart-icon';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -8,8 +10,6 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
-import { ShoppingCartIcon } from '@/components/shopping-cart-icon';
-import { Trash2, Minus, Plus } from 'lucide-react';
 
 interface CartItem {
     id: number;
@@ -129,7 +129,6 @@ export function ShoppingCartDrawer({ open, onOpenChange, onCartUpdate, onProduct
 
     // Since we ensure only one record per product, we can use items directly
     const cartItems = cart?.products || [];
-    const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     const handleUpdateQuantity = async (cartProductId: number, newQuantity: number) => {
         if (newQuantity < 1) {
